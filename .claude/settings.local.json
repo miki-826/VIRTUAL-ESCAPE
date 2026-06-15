@@ -28,7 +28,20 @@
       "PowerShell(Get-Command gh -ErrorAction SilentlyContinue; \"---\"; Get-ChildItem \"C:\\\\Program Files\\\\GitHub CLI\",\"$env:LOCALAPPDATA\\\\Programs\\\\GitHub CLI\" -ErrorAction SilentlyContinue | Select-Object FullName; \"---\"; & \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" --version 2>&1 | Select-Object -First 2)",
       "Bash(cd \"C:/Users/micke/OneDrive/Desktop/claude専用ファイル/VIRTUAL ESCAPE\" && rm public/images/*.svg && ls public/images/)",
       "Bash(git add *)",
-      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: VIRTUAL ESCAPE - 3-min humanity authentication game *)"
+      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: VIRTUAL ESCAPE - 3-min humanity authentication game *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://github.com/miki-826/VIRTUAL-ESCAPE)",
+      "Bash(npx kill-port *)",
+      "Bash(npx --yes next lint)",
+      "Bash(curl -s \"https://virtual-escape.vercel.app/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://virtual-escape.vercel.app/images/title-bg.png\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://virtual-escape.vercel.app/audio/bgm.mp3\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST \"https://virtual-escape.vercel.app/api/game/start\")",
+      "Bash(git -c user.name=\"miki-826\" -c user.email=\"mickey.2003826@gmail.com\" commit -m \"chore: add vercel.json to force Next.js framework detection\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: オープニングストーリー / ゲーム内操作ガイド / 成功・失敗エンディングを追加 *)"
     ]
   }
 }

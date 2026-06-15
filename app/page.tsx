@@ -1,10 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TitleScreen } from "@/components/TitleScreen";
-import { HowToScreen } from "@/components/HowToScreen";
+import { OpeningScreen } from "@/components/OpeningScreen";
 import { MicCheckScreen } from "@/components/MicCheckScreen";
 import { GameScreen } from "@/components/GameScreen";
 import { ResultScreen } from "@/components/ResultScreen";
+import { EndingScreen } from "@/components/EndingScreen";
 import { BgmController } from "@/components/BgmController";
 import { useTimer } from "@/hooks/useTimer";
 import { useRecorder } from "@/hooks/useRecorder";
@@ -23,7 +24,13 @@ import type {
   StartResponse,
 } from "@/types/game";
 
-type Phase = "title" | "howto" | "micCheck" | "playing" | "result";
+type Phase =
+  | "title"
+  | "opening"
+  | "micCheck"
+  | "playing"
+  | "result"
+  | "ending";
 
 export default function Page() {
   const [phase, setPhase] = useState<Phase>("title");
@@ -99,7 +106,7 @@ export default function Page() {
     });
   }, [timer]);
 
-  const start = () => setPhase("howto");
+  const start = () => setPhase("opening");
 
   const onMicReady = () => {
     setTextFallback(false);
@@ -143,7 +150,9 @@ export default function Page() {
       {phase === "title" && (
         <TitleScreen onStart={start} mockMode={mockMode} />
       )}
-      {phase === "howto" && <HowToScreen onNext={() => setPhase("micCheck")} />}
+      {phase === "opening" && (
+        <OpeningScreen onComplete={() => setPhase("micCheck")} />
+      )}
       {phase === "micCheck" && (
         <MicCheckScreen
           onReady={onMicReady}
@@ -169,6 +178,14 @@ export default function Page() {
           result={result}
           answers={answers}
           best={best}
+          onRetry={onRetry}
+          onEnding={() => setPhase("ending")}
+        />
+      )}
+      {phase === "ending" && result && (
+        <EndingScreen
+          success={result.success}
+          rank={result.rank}
           onRetry={onRetry}
         />
       )}

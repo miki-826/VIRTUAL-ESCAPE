@@ -7,9 +7,16 @@ type Props = {
   answers: AnswerLog[];
   best: number;
   onRetry: () => void;
+  onEnding: () => void;
 };
 
-export function ResultScreen({ result, answers, best, onRetry }: Props) {
+export function ResultScreen({
+  result,
+  answers,
+  best,
+  onRetry,
+  onEnding,
+}: Props) {
   const success = result.success;
 
   const avgPeak = avg(answers.map((a) => a.audioFeatures?.peakVolume ?? 0));
@@ -141,13 +148,29 @@ export function ResultScreen({ result, answers, best, onRetry }: Props) {
           </ul>
         </section>
 
-        <button
-          type="button"
-          onClick={onRetry}
-          className="ve-title mt-8 w-full cursor-pointer border-2 border-[color:var(--accent)] bg-[color:var(--accent)]/15 px-6 py-4 text-base tracking-[0.3em] text-[color:var(--accent-bright)] transition-all hover:bg-[color:var(--accent)]/30 hover:shadow-[0_0_18px_var(--accent)]"
-        >
-          &gt; もう一度救出する
-        </button>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={onEnding}
+            className="ve-title w-full cursor-pointer border-2 px-6 py-4 text-base tracking-[0.3em] transition-all active:translate-y-px"
+            style={{
+              borderColor: success ? "var(--success)" : "var(--danger)",
+              color: success ? "var(--success)" : "var(--danger)",
+              background: success
+                ? "rgba(52,211,153,0.12)"
+                : "rgba(239,68,68,0.12)",
+            }}
+          >
+            &gt; この先を見る
+          </button>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="ve-title w-full cursor-pointer border-2 border-[color:var(--border)] px-6 py-4 text-base tracking-[0.3em] text-[color:var(--text-sub)] transition-all hover:border-[color:var(--accent)] hover:text-[color:var(--accent-bright)]"
+          >
+            &gt; もう一度
+          </button>
+        </div>
       </div>
     </div>
   );

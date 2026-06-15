@@ -11,6 +11,7 @@ import { useRecorder, MAX_RECORD_SEC } from "@/hooks/useRecorder";
 import { analyzeAudioBlob, EMPTY_FEATURES } from "@/lib/audioFeatures";
 import { Waveform } from "@/components/Waveform";
 import { SystemHeader } from "@/components/SystemHeader";
+import { HelpOverlay } from "@/components/HelpOverlay";
 import { formatTime, sanitizeInput } from "@/lib/utils";
 
 type Props = {
@@ -45,6 +46,8 @@ export function GameScreen({
   const [result, setResult] = useState<AnswerResponse | null>(null);
   const playingRef = useRef<HTMLAudioElement | null>(null);
   const phaseStartSec = useRef(remainingSec);
+  const [showHelp, setShowHelp] = useState(round === 1);
+  const helpSeen = useRef(round === 1);
 
   useEffect(() => {
     setText("");
@@ -165,13 +168,26 @@ export function GameScreen({
       />
 
       <div className="mx-auto max-w-3xl px-3 pt-3 sm:px-6 sm:pt-6">
-        <SystemHeader
-          remainingSec={remainingSec}
-          totalSec={totalSec}
-          round={round}
-          totalRounds={totalRounds}
-          mockMode={mockMode}
-        />
+        <div className="relative">
+          <SystemHeader
+            remainingSec={remainingSec}
+            totalSec={totalSec}
+            round={round}
+            totalRounds={totalRounds}
+            mockMode={mockMode}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              helpSeen.current = false;
+              setShowHelp(true);
+            }}
+            aria-label="操作説明を開く"
+            className="absolute -bottom-3 right-2 z-20 grid h-7 w-7 place-items-center rounded-full border border-[color:var(--accent)] bg-[color:var(--bg)] text-xs text-[color:var(--accent-bright)] transition-colors hover:bg-[color:var(--accent)]/20 sm:-right-2"
+          >
+            ?
+          </button>
+        </div>
 
         <main className="mt-4 grid gap-4 sm:mt-6">
           <section className="ve-frame relative overflow-hidden rounded-sm">
@@ -361,6 +377,16 @@ export function GameScreen({
           </button>
         </div>
       </div>
+
+      {showHelp && (
+        <HelpOverlay
+          firstTime={helpSeen.current}
+          onClose={() => {
+            helpSeen.current = false;
+            setShowHelp(false);
+          }}
+        />
+      )}
     </div>
   );
 }
