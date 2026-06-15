@@ -23,11 +23,16 @@ const LINES: Line[] = [
   { text: "アップデートまで残り180秒。ログアウト・シーケンスを開始します。", emphasis: true },
 ];
 
-const SPEED = 26;
+// 音声OFF/非対応時の読みやすいタイプ速度（ミリ秒/文字）
+const TYPE_SPEED = 60;
+const TAG_SPEED = 24;
+// 読み上げで境界イベントが来ない場合の概算ペース
+const VOICE_FALLBACK_SPEED = 115;
 
 export function OpeningScreen({ onComplete }: Props) {
   const [lineIdx, setLineIdx] = useState(0);
   const [charIdx, setCharIdx] = useState(0);
+  const [lineDone, setLineDone] = useState(false);
   const [done, setDone] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [speaking, setSpeaking] = useState(false);
@@ -35,19 +40,76 @@ export function OpeningScreen({ onComplete }: Props) {
   const { supported: voiceSupported, speak, cancel } = useSpeech();
 
   const current = LINES[lineIdx];
-  const lineComplete = current ? charIdx >= current.text.length : true;
 
-  // 行が変わるたびに、その行を読み上げる（システムタグ行は除く）
+  // 行ごとのライフサイクル：文字を（音声に同期して）出し、終わったらクリック待ち。
+  // 自動では絶対に次へ進まない＝読み上げが途中で打ち切られない。
   useEffect(() => {
-    if (!voiceOn || done || !current) return;
-    const text = current.text;
-    if (text.startsWith("[")) {
+    if (done || !current) return;
+    const fullText = current.text;
+    const spoken = fullText.replace(/──/g, "、");
+    const isTag = fullText.startsWith("[");
+    setCharIdx(0);
+    setLineDone(false);
+
+    let cancelled = false;
+    let boundaryFired = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let probeId: ReturnType<typeof setTimeout> | null = null;
+
+    const clearTimers = () => {
+      if (intervalId) clearInterval(intervalId);
+      if (probeId) clearTimeout(probeId);
+      intervalId = null;
+      probeId = null;
+    };
+
+    const finishLine = () => {
+      if (cancelled) return;
+      clearTimers();
+      setCharIdx(fullText.length);
+      setLineDone(true);
       setSpeaking(false);
-      return;
+    };
+
+    const runTypewriter = (perChar: number, markDone: boolean) => {
+      intervalId = setInterval(() => {
+        setCharIdx((c) => {
+          if (c >= fullText.length) {
+            if (intervalId) clearInterval(intervalId);
+            intervalId = null;
+            if (markDone) setLineDone(true);
+            return c;
+          }
+          return c + 1;
+        });
+      }, perChar);
+    };
+
+    if (voiceOn && voiceSupported && !isTag) {
+      setSpeaking(true);
+      speak(spoken, {
+        onBoundary: (ci, len) => {
+          boundaryFired = true;
+          clearTimers();
+          setCharIdx(Math.min(fullText.length, ci + (len || 1)));
+        },
+        onEnd: finishLine,
+      });
+      // 境界イベントが来ないブラウザ向けに、来なければ概算ペースで文字送り
+      probeId = setTimeout(() => {
+        if (!cancelled && !boundaryFired && intervalId == null) {
+          runTypewriter(VOICE_FALLBACK_SPEED, false);
+        }
+      }, 450);
+    } else {
+      runTypewriter(isTag ? TAG_SPEED : TYPE_SPEED, true);
     }
-    setSpeaking(true);
-    speak(text.replace(/──/g, "、"), () => setSpeaking(false));
-    return () => cancel();
+
+    return () => {
+      cancelled = true;
+      clearTimers();
+      cancel();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineIdx, voiceOn]);
 
@@ -61,39 +123,22 @@ export function OpeningScreen({ onComplete }: Props) {
   useEffect(() => () => cancel(), [cancel]);
 
   useEffect(() => {
-    if (!current) {
-      setDone(true);
-      return;
-    }
-    if (charIdx < current.text.length) {
-      const id = setTimeout(() => setCharIdx((c) => c + 1), SPEED);
-      return () => clearTimeout(id);
-    }
-    const id = setTimeout(() => {
-      if (lineIdx < LINES.length - 1) {
-        setLineIdx((l) => l + 1);
-        setCharIdx(0);
-      } else {
-        setDone(true);
-      }
-    }, 650);
-    return () => clearTimeout(id);
-  }, [charIdx, lineIdx, current]);
-
-  useEffect(() => {
     containerRef.current?.scrollTo({
       top: containerRef.current.scrollHeight,
       behavior: "smooth",
     });
   }, [lineIdx, charIdx]);
 
+  // クリックでのみ進行。未完了ならまず行を完了（読み上げ・タイプをスキップ）、完了済みなら次行へ。
   const advance = () => {
-    if (done) return;
-    if (!lineComplete) {
+    if (done || !current) return;
+    if (!lineDone) {
+      cancel();
       setCharIdx(current.text.length);
+      setLineDone(true);
+      setSpeaking(false);
     } else if (lineIdx < LINES.length - 1) {
       setLineIdx((l) => l + 1);
-      setCharIdx(0);
     } else {
       setDone(true);
     }
@@ -189,7 +234,7 @@ export function OpeningScreen({ onComplete }: Props) {
                   <span className="mr-2 text-[color:var(--text-sub)]">›</span>
                 )}
                 {shownText}
-                {isCurrent && !lineComplete && (
+                {isCurrent && !lineDone && (
                   <span className="ml-0.5 animate-pulse">▌</span>
                 )}
               </p>
@@ -211,7 +256,11 @@ export function OpeningScreen({ onComplete }: Props) {
                 SKIP →
               </button>
               <span className="text-[10px] tracking-[0.25em] text-[color:var(--text-sub)] ve-blink">
-                TAP TO CONTINUE
+                {lineDone
+                  ? lineIdx < LINES.length - 1
+                    ? "▶ タップで次へ"
+                    : "▶ タップで完了"
+                  : "タップでスキップ"}
               </span>
             </>
           ) : (

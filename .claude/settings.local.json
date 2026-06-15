@@ -42,7 +42,8 @@
       "Bash(git -c user.name=\"miki-826\" -c user.email=\"mickey.2003826@gmail.com\" commit -m \"chore: add vercel.json to force Next.js framework detection\")",
       "mcp__Claude_Preview__preview_start",
       "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: オープニングストーリー / ゲーム内操作ガイド / 成功・失敗エンディングを追加 *)",
-      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: オープニングAI読み上げ\\(TTS\\) と OpenAI生成スライド版マニュアルを追加 *)"
+      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: オープニングAI読み上げ\\(TTS\\) と OpenAI生成スライド版マニュアルを追加 *)",
+      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'fix: オープニングの読み上げが途切れる問題を修正 *)"
     ]
   }
 }

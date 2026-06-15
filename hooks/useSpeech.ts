@@ -31,9 +31,15 @@ export function useSpeech() {
   }, []);
 
   const speak = useCallback(
-    (text: string, onEnd?: () => void) => {
+    (
+      text: string,
+      opts?: {
+        onEnd?: () => void;
+        onBoundary?: (charIndex: number, charLength: number) => void;
+      },
+    ) => {
       if (!supported) {
-        onEnd?.();
+        opts?.onEnd?.();
         return;
       }
       const synth = window.speechSynthesis;
@@ -45,7 +51,11 @@ export function useSpeech() {
       u.rate = 0.96;
       u.pitch = 0.85;
       u.volume = 1;
-      if (onEnd) u.onend = () => onEnd();
+      if (opts?.onBoundary) {
+        u.onboundary = (e) =>
+          opts.onBoundary?.(e.charIndex, (e as SpeechSynthesisEvent).charLength ?? 0);
+      }
+      if (opts?.onEnd) u.onend = () => opts.onEnd?.();
       synth.speak(u);
     },
     [supported],
