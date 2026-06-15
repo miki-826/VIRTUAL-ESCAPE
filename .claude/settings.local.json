@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls references/)",
+      "Bash(ls assets/)",
+      "Bash(node -e \"console.log\\('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET'\\)\")",
+      "Bash(npm -v)",
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --app --no-src-dir --eslint --use-npm --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npx --yes create-next-app@latest virtual-escape --ts --tailwind --app --no-src-dir --eslint --use-npm --import-alias \"@/*\" --no-turbopack)",
+      "PowerShell($root = \"C:\\\\Users\\\\micke\\\\OneDrive\\\\Desktop\\\\claude専用ファイル\\\\VIRTUAL ESCAPE\"; $sub = Join-Path $root \"virtual-escape\"; Get-ChildItem -Force -Path $sub | ForEach-Object { Move-Item -Force -Path $_.FullName -Destination $root }; Remove-Item -Force -Recurse $sub; Get-ChildItem -Force -Path $root | Select-Object Name)",
+      "Bash(cd \"C:/Users/micke/OneDrive/Desktop/claude専用ファイル/VIRTUAL ESCAPE\" && cp \"C:/Users/micke/.claude-oss/skills/hackathon-build/assets/gen-image.mjs\" ./gen-image.mjs && mkdir -p public/images public/audio public/video components hooks lib types && cp \"資料/Three_Minutes_Left.mp3\" public/audio/bgm.mp3 && ls public/audio && head -40 gen-image.mjs)",
+      "Bash(node gen-image.mjs \"dark cyber virtual space, emergency logout system, glowing deep blue grid floor receding into black, floating digital particles and faint glitch lines, cinematic wide web game background, large clean empty area in the center for title text, neon cyan accents, no text, no logo, no watermark\" public/images/title-bg.png 1536x1024 medium)",
+      "Bash(node gen-image.mjs \"futuristic voice authentication terminal room, holographic cyan waveform panels on dark navy walls, subtle scanline and glitch effect, deep virtual black floor, web game background, calm readable empty area in center, neon cyan and blue, no text, no logo, no watermark\" public/images/game-bg.png 1536x1024 medium)",
+      "Bash(node gen-image.mjs \"digital escape portal opening in cyberspace, cyber logout gate with green and cyan light beams streaming upward, dramatic but clean composition, dark background, web game victory background, empty center space, no text, no logo, no watermark\" public/images/result-bg.png 1536x1024 medium)",
+      "Bash(node gen-image.mjs \"abstract logout manager AI avatar, circular cyan hologram core, minimal geometric robotic face, concentric scan rings, glowing neon cyan on deep black background, centered emblem, no text, no logo, no watermark\" public/images/manager-ai.png 1024x1024 medium)",
+      "Bash(node -e \"const k=process.env.OPENAI_API_KEY||''; console.log\\('len:', k.length\\); console.log\\('prefix:', k.slice\\(0,7\\)\\); console.log\\('looksReal:', k.startsWith\\('sk-'\\)\\)\")",
+      "PowerShell($k = $env:OPENAI_API_KEY; if \\($k\\) { \"len: $\\($k.Length\\)\"; \"prefix: $\\($k.Substring\\(0,[Math]::Min\\(7,$k.Length\\)\\)\\)\"; \"looksReal: $\\($k.StartsWith\\('sk-'\\)\\)\" } else { \"NOT SET in PowerShell\" }; \"--- user/machine scope ---\"; [System.Environment]::GetEnvironmentVariable\\('OPENAI_API_KEY','User'\\); [System.Environment]::GetEnvironmentVariable\\('OPENAI_API_KEY','Machine'\\))",
+      "Bash(rm -rf \"C:/Users/micke/OneDrive/Desktop/micke\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -X POST http://localhost:3000/api/game/start)",
+      "Bash(curl -s -X POST http://localhost:3000/api/game/answer -H \"Content-Type: application/json\" -d '{\"challengeId\":\"monday_delay\",\"answerText\":\"はぁ、もう無理\",\"audioFeatures\":{\"durationSec\":2.4,\"averageVolume\":0.04,\"peakVolume\":0.18,\"silenceRatio\":0.2,\"volumeVariance\":0.015,\"burstCount\":2,\"hasAudio\":true}}')",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "PowerShell(gh auth status 2>&1)",
+      "PowerShell(gh repo view miki-826/VIRTUAL-ESCAPE 2>&1)",
+      "PowerShell(\"---\")",
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue; \"---\"; Get-ChildItem \"C:\\\\Program Files\\\\GitHub CLI\",\"$env:LOCALAPPDATA\\\\Programs\\\\GitHub CLI\" -ErrorAction SilentlyContinue | Select-Object FullName; \"---\"; & \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" --version 2>&1 | Select-Object -First 2)",
+      "Bash(cd \"C:/Users/micke/OneDrive/Desktop/claude専用ファイル/VIRTUAL ESCAPE\" && rm public/images/*.svg && ls public/images/)",
+      "Bash(git add *)",
+      "Bash(git -c user.name=miki-826 -c user.email=mickey.2003826@gmail.com commit -m 'feat: VIRTUAL ESCAPE - 3-min humanity authentication game *)"
+    ]
+  }
+}

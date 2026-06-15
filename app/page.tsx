@@ -1,65 +1,179 @@
-import Image from "next/image";
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { TitleScreen } from "@/components/TitleScreen";
+import { HowToScreen } from "@/components/HowToScreen";
+import { MicCheckScreen } from "@/components/MicCheckScreen";
+import { GameScreen } from "@/components/GameScreen";
+import { ResultScreen } from "@/components/ResultScreen";
+import { BgmController } from "@/components/BgmController";
+import { useTimer } from "@/hooks/useTimer";
+import { useRecorder } from "@/hooks/useRecorder";
+import {
+  MOCK_CHALLENGES,
+  TIME_LIMIT_SEC,
+  TOTAL_ROUNDS,
+} from "@/lib/mockData";
+import { buildResult } from "@/lib/score";
+import { getBestScore, saveResult } from "@/lib/storage";
+import { saveResultToSupabase } from "@/lib/supabase";
+import type {
+  AnswerLog,
+  Challenge,
+  GameResult,
+  StartResponse,
+} from "@/types/game";
 
-export default function Home() {
+type Phase = "title" | "howto" | "micCheck" | "playing" | "result";
+
+export default function Page() {
+  const [phase, setPhase] = useState<Phase>("title");
+  const [sessionId, setSessionId] = useState("");
+  const [mockMode, setMockMode] = useState(true);
+  const [challenges, setChallenges] = useState<Challenge[]>(MOCK_CHALLENGES);
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [answers, setAnswers] = useState<AnswerLog[]>([]);
+  const [result, setResult] = useState<GameResult | null>(null);
+  const [best, setBest] = useState(0);
+  const [textFallback, setTextFallback] = useState(false);
+
+  const timer = useTimer(TIME_LIMIT_SEC);
+  const recorder = useRecorder();
+  const finalizeRef = useRef<(() => void) | null>(null);
+
+  const fetchStart = useCallback(async () => {
+    try {
+      const res = await fetch("/api/game/start", { method: "POST" });
+      const data = (await res.json()) as StartResponse;
+      setSessionId(data.sessionId);
+      setMockMode(data.mockMode);
+      setChallenges(
+        data.challenges?.length ? data.challenges : MOCK_CHALLENGES,
+      );
+    } catch {
+      setSessionId(`local-${Date.now()}`);
+      setMockMode(true);
+      setChallenges(MOCK_CHALLENGES);
+    }
+  }, []);
+
+  useEffect(() => {
+    setBest(getBestScore());
+    void fetchStart();
+  }, [fetchStart]);
+
+  const finalize = useCallback(
+    async (collected: AnswerLog[]) => {
+      timer.stop();
+      const fallback = buildResult(collected);
+      try {
+        const res = await fetch("/api/game/result", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, answers: collected }),
+        });
+        const data = (await res.json()) as GameResult;
+        const finalRes =
+          data && typeof data.totalScore === "number" ? data : fallback;
+        setResult(finalRes);
+        saveResult({ sessionId, mockMode, result: finalRes, answers: collected });
+        void saveResultToSupabase({
+          sessionId,
+          mockMode,
+          result: finalRes,
+          answers: collected,
+        });
+      } catch {
+        setResult(fallback);
+        saveResult({ sessionId, mockMode, result: fallback, answers: collected });
+      }
+      setPhase("result");
+    },
+    [sessionId, mockMode, timer],
+  );
+
+  finalizeRef.current = () => finalize(answers);
+
+  useEffect(() => {
+    timer.setOnExpire(() => {
+      finalizeRef.current?.();
+    });
+  }, [timer]);
+
+  const start = () => setPhase("howto");
+
+  const onMicReady = () => {
+    setTextFallback(false);
+    setRoundIndex(0);
+    setAnswers([]);
+    setResult(null);
+    timer.start();
+    setPhase("playing");
+  };
+
+  const onTextFallback = () => {
+    setTextFallback(true);
+    setRoundIndex(0);
+    setAnswers([]);
+    setResult(null);
+    timer.start();
+    setPhase("playing");
+  };
+
+  const onSubmitted = (log: AnswerLog) => {
+    const next = [...answers, log];
+    setAnswers(next);
+    if (next.length >= TOTAL_ROUNDS) {
+      void finalize(next);
+    } else {
+      setRoundIndex((i) => i + 1);
+    }
+  };
+
+  const onRetry = () => {
+    setResult(null);
+    setAnswers([]);
+    setRoundIndex(0);
+    setBest(getBestScore());
+    setPhase("title");
+    void fetchStart();
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <>
+      {phase === "title" && (
+        <TitleScreen onStart={start} mockMode={mockMode} />
+      )}
+      {phase === "howto" && <HowToScreen onNext={() => setPhase("micCheck")} />}
+      {phase === "micCheck" && (
+        <MicCheckScreen
+          onReady={onMicReady}
+          onTextFallback={onTextFallback}
+          requestMic={recorder.requestMic}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+      {phase === "playing" && challenges[roundIndex] && (
+        <GameScreen
+          challenge={challenges[roundIndex]}
+          round={roundIndex + 1}
+          totalRounds={TOTAL_ROUNDS}
+          totalSec={TIME_LIMIT_SEC}
+          remainingSec={timer.remainingSec}
+          mockMode={mockMode}
+          sessionId={sessionId}
+          textFallback={textFallback}
+          onSubmitted={onSubmitted}
+        />
+      )}
+      {phase === "result" && result && (
+        <ResultScreen
+          result={result}
+          answers={answers}
+          best={best}
+          onRetry={onRetry}
+        />
+      )}
+
+      <BgmController src="/audio/bgm.mp3" />
+    </>
   );
 }
