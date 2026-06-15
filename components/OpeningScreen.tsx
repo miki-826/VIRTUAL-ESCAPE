@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useSpeech } from "@/hooks/useSpeech";
 
 type Props = { onComplete: () => void };
 
@@ -28,10 +29,36 @@ export function OpeningScreen({ onComplete }: Props) {
   const [lineIdx, setLineIdx] = useState(0);
   const [charIdx, setCharIdx] = useState(0);
   const [done, setDone] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const [speaking, setSpeaking] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { supported: voiceSupported, speak, cancel } = useSpeech();
 
   const current = LINES[lineIdx];
   const lineComplete = current ? charIdx >= current.text.length : true;
+
+  // 行が変わるたびに、その行を読み上げる（システムタグ行は除く）
+  useEffect(() => {
+    if (!voiceOn || done || !current) return;
+    const text = current.text;
+    if (text.startsWith("[")) {
+      setSpeaking(false);
+      return;
+    }
+    setSpeaking(true);
+    speak(text.replace(/──/g, "、"), () => setSpeaking(false));
+    return () => cancel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lineIdx, voiceOn]);
+
+  useEffect(() => {
+    if (done) {
+      cancel();
+      setSpeaking(false);
+    }
+  }, [done, cancel]);
+
+  useEffect(() => () => cancel(), [cancel]);
 
   useEffect(() => {
     if (!current) {
@@ -89,22 +116,50 @@ export function OpeningScreen({ onComplete }: Props) {
 
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-5 py-10 sm:px-8 sm:py-14">
         <div className="flex items-center gap-3">
-          <Image
-            src="/images/manager-ai.png"
-            alt="LOGOUT MANAGER AI"
-            width={44}
-            height={44}
-            className="rounded-full border border-[color:var(--accent)]"
-          />
+          <div
+            className={`relative rounded-full ${speaking ? "ring-2 ring-[color:var(--accent)]" : ""}`}
+            style={
+              speaking
+                ? { boxShadow: "0 0 16px var(--accent)", transition: "box-shadow .2s" }
+                : undefined
+            }
+          >
+            <Image
+              src="/images/manager-ai.png"
+              alt="LOGOUT MANAGER AI"
+              width={44}
+              height={44}
+              className="rounded-full border border-[color:var(--accent)]"
+            />
+          </div>
           <div>
             <div className="ve-title text-xs tracking-[0.3em] text-[color:var(--accent-bright)]">
               LOGIN / LOGOUT MANAGER AI
             </div>
-            <div className="text-[10px] tracking-[0.25em] text-[color:var(--text-sub)]">
-              USER PROTECTION PROTOCOL
+            <div className="flex items-center gap-2 text-[10px] tracking-[0.25em] text-[color:var(--text-sub)]">
+              {speaking ? (
+                <span className="flex items-center gap-1 text-[color:var(--accent-bright)]">
+                  <span className="ve-blink">◖</span> SPEAKING…
+                </span>
+              ) : (
+                "USER PROTECTION PROTOCOL"
+              )}
             </div>
           </div>
-          <span className="ml-auto ve-blink h-2 w-2 rounded-full bg-[color:var(--danger)]" />
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (voiceOn) cancel();
+                setVoiceOn((v) => !v);
+              }}
+              aria-label={voiceOn ? "読み上げをオフ" : "読み上げをオン"}
+              className="ml-auto flex items-center gap-1.5 rounded-sm border border-[color:var(--border)] px-2.5 py-1.5 text-[10px] tracking-[0.2em] text-[color:var(--text-sub)] transition-colors hover:border-[color:var(--accent)] hover:text-[color:var(--accent-bright)]"
+            >
+              {voiceOn ? "🔊 音声 ON" : "🔇 音声 OFF"}
+            </button>
+          )}
         </div>
 
         <div className="ve-divider my-5" />
